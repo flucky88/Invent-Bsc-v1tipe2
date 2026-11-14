@@ -1,0 +1,1047 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Inventaris BSC</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --p:#0d9488;--p-dark:#0f766e;
+  --bg:#f1f5f9;--card:#fff;--b:#e2e8f0;--m:#64748b;--t:#0f172a;
+  --danger:#dc2626;--warn:#f59e0b;--ok:#16a34a;
+  --r:12px;--sh:0 1px 3px rgba(0,0,0,.08),0 4px 12px rgba(0,0,0,.04);
+  --sh-hover:0 4px 12px rgba(0,0,0,.10),0 8px 24px rgba(0,0,0,.06);
+  --sw:260px;--tf:.15s;--tm:.25s;--ease:cubic-bezier(.4,0,.2,1);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font:14px/1.5 'Inter',system-ui,sans-serif;background:var(--bg);color:var(--t);-webkit-font-smoothing:antialiased}
+button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+input,select,textarea{font-family:inherit;font-size:14px}
+a{color:var(--p);text-decoration:none}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important;scroll-behavior:auto!important}}
+
+#skeleton{position:fixed;inset:0;z-index:9999;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;transition:opacity .4s var(--ease)}
+#skeleton.hide{opacity:0;pointer-events:none}
+.sk-logo{width:64px;height:64px;border-radius:16px;background:linear-gradient(90deg,#e2e8f0 25%,#f1f5f9 50%,#e2e8f0 75%);background-size:200% 100%;animation:sh 1.2s infinite}
+.sk-line{height:14px;border-radius:8px;background:linear-gradient(90deg,#e2e8f0 25%,#f1f5f9 50%,#e2e8f0 75%);background-size:200% 100%;animation:sh 1.2s infinite}
+.sk-line.w1{width:200px}.sk-line.w2{width:140px}
+@keyframes sh{0%{background-position:200% 0}100%{background-position:-200% 0}}
+
+.app{display:flex;min-height:100vh}
+.sidebar{width:var(--sw);background:#0f172a;color:#cbd5e1;position:fixed;inset:0 auto 0 0;z-index:100;display:flex;flex-direction:column;transition:transform var(--tm) var(--ease);overflow-y:auto}
+.sidebar::-webkit-scrollbar{width:6px}
+.sidebar::-webkit-scrollbar-thumb{background:#334155;border-radius:3px}
+.sb-head{padding:18px;border-bottom:1px solid #1e293b;display:flex;align-items:center;gap:11px}
+.sb-logo{width:40px;height:40px;border-radius:10px;flex-shrink:0;background:var(--p);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:16px;overflow:hidden;transition:transform var(--tf) var(--ease),box-shadow var(--tf) var(--ease)}
+.sb-logo:hover{transform:scale(1.05);box-shadow:0 4px 12px rgba(13,148,136,.35)}
+.sb-logo img{width:100%;height:100%;object-fit:cover}
+.sb-name{font-weight:700;font-size:14.5px;color:#f1f5f9;line-height:1.2}
+.sb-sub{font-size:11px;color:#64748b;margin-top:1px}
+.nav{padding:12px 8px;flex:1}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:8px;color:#cbd5e1;font-weight:500;font-size:13.5px;cursor:pointer;transition:background var(--tf) var(--ease),color var(--tf) var(--ease),padding-left var(--tf) var(--ease);user-select:none}
+.nav-item:hover{background:#1e293b;color:#f1f5f9;padding-left:16px}
+.nav-item.on{background:var(--p);color:#fff}
+.nav-item.on:hover{padding-left:12px}
+.nav-item .ico{font-size:15px;width:20px;text-align:center;flex-shrink:0;transition:transform var(--tf) var(--ease)}
+.nav-item:hover .ico{transform:scale(1.12)}
+.nav-item .chev{margin-left:auto;font-size:9px;transition:transform var(--tm) var(--ease);color:#64748b}
+.nav-item.open .chev{transform:rotate(90deg);color:#f1f5f9}
+.nav-sub{display:none;padding:2px 0 2px 18px;animation:slideDown .22s var(--ease)}
+.nav-sub.open{display:block}
+@keyframes slideDown{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
+.nav-sub.grid{display:none;grid-template-columns:repeat(4,1fr);gap:4px;padding:4px 6px 6px 14px}
+.nav-sub.grid.open{display:grid}
+.nav-sub.grid .nav-item{padding:6px 8px;font-size:12.5px;justify-content:center;color:#94a3b8;gap:0}
+.nav-sub.grid .nav-item:hover{padding-left:8px;transform:scale(1.08)}
+.nav-sub .nav-item{padding:7px 12px;font-size:12.5px;color:#94a3b8}
+.nav-sub .nav-item.on{background:var(--p-dark);color:#fff}
+.nav-label{padding:14px 14px 6px;font-size:10px;font-weight:600;letter-spacing:.08em;color:#475569;text-transform:uppercase}
+
+.main{flex:1;margin-left:var(--sw);display:flex;flex-direction:column;min-width:0;transition:margin var(--tm) var(--ease)}
+.topbar{height:64px;background:rgba(255,255,255,.92);border-bottom:1px solid var(--b);display:flex;align-items:center;gap:12px;padding:0 20px;position:sticky;top:0;z-index:50;backdrop-filter:blur(8px)}
+.burger{display:none;font-size:20px;color:var(--t);padding:6px 10px;border-radius:8px;transition:background var(--tf),transform var(--tf)}
+.burger:hover{background:var(--bg)}
+.burger:active{transform:scale(.92)}
+.tb-title{font-weight:700;font-size:15.5px;line-height:1.2}
+.tb-sub{font-size:12px;color:var(--m)}
+.tb-spacer{flex:1}
+.search-global{display:flex;align-items:center;gap:8px;background:var(--bg);border:1px solid var(--b);border-radius:9px;padding:7px 12px;color:var(--m);font-size:13px;transition:border-color var(--tf),transform var(--tf),box-shadow var(--tf)}
+.search-global:hover{border-color:var(--p);transform:translateY(-1px);box-shadow:0 2px 8px rgba(13,148,136,.12)}
+.search-global kbd{background:#fff;border:1px solid var(--b);border-radius:5px;padding:1px 6px;font-size:11px;font-family:inherit}
+.content{padding:22px;flex:1;max-width:1400px;width:100%;margin:0 auto;animation:pageIn .28s var(--ease)}
+@keyframes pageIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.overlay{display:none;position:fixed;inset:0;background:rgba(15,23,42,.5);z-index:99;opacity:0;transition:opacity var(--tm) var(--ease)}
+.overlay.on{display:block;opacity:1}
+
+.card{background:var(--card);border:1px solid var(--b);border-radius:var(--r);box-shadow:var(--sh);transition:box-shadow var(--tf),border-color var(--tf)}
+.card:hover{border-color:#cbd5e1}
+.page-head{display:flex;align-items:flex-start;gap:14px;flex-wrap:wrap;margin-bottom:18px}
+.page-head h1{font-size:19px;font-weight:700}
+.page-head p{color:var(--m);font-size:13px;margin-top:2px}
+.page-head .actions{margin-left:auto;display:flex;gap:8px;flex-wrap:wrap}
+
+.btn{display:inline-flex;align-items:center;gap:6px;padding:9px 15px;border-radius:9px;font-weight:600;font-size:13px;transition:filter var(--tf),background var(--tf),transform var(--tf),box-shadow var(--tf);white-space:nowrap;position:relative;overflow:hidden}
+.btn:active{transform:translateY(1px) scale(.98)}
+.btn-p{background:var(--p);color:#fff}
+.btn-p:hover{background:var(--p-dark);box-shadow:0 4px 12px rgba(13,148,136,.35);transform:translateY(-1px)}
+.btn-o{background:var(--card);color:var(--t);border:1px solid var(--b)}
+.btn-o:hover{background:var(--bg);border-color:#cbd5e1;transform:translateY(-1px)}
+.btn-d{background:var(--danger);color:#fff}
+.btn-d:hover{filter:brightness(.92);box-shadow:0 4px 12px rgba(220,38,38,.35);transform:translateY(-1px)}
+.ico-btn{width:30px;height:30px;display:inline-flex;align-items:center;justify-content:center;border-radius:7px;font-size:14px;transition:background var(--tf),color var(--tf),transform var(--tf);color:var(--m)}
+.ico-btn:hover{background:var(--bg);color:var(--t);transform:scale(1.15)}
+.ico-btn:active{transform:scale(.95)}
+.ico-btn.danger:hover{background:#fee2e2;color:var(--danger)}
+
+.toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:14px}
+.toolbar .grow{flex:1;min-width:180px}
+.input-search{width:100%;padding:9px 12px 9px 34px;border:1px solid var(--b);border-radius:9px;background:var(--card) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%2364748b' viewBox='0 0 16 16'%3E%3Cpath d='M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z'/%3E%3C/svg%3E") no-repeat 11px center;outline:none;transition:border-color var(--tf),box-shadow var(--tf)}
+.input-search:focus{border-color:var(--p);box-shadow:0 0 0 3px rgba(13,148,136,.12)}
+.select,.input{padding:9px 12px;border:1px solid var(--b);border-radius:9px;background:var(--card);outline:none;transition:border-color var(--tf),box-shadow var(--tf);width:100%}
+.select:focus,.input:focus{border-color:var(--p);box-shadow:0 0 0 3px rgba(13,148,136,.12)}
+.select{width:auto;min-width:130px}
+
+.stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:14px;margin-bottom:20px}
+.stat{background:var(--card);border:1px solid var(--b);border-radius:var(--r);padding:17px;box-shadow:var(--sh);position:relative;overflow:hidden;transition:transform var(--tm) var(--ease),box-shadow var(--tm) var(--ease);animation:statIn .35s var(--ease) backwards}
+.stat:nth-child(1){animation-delay:.05s}.stat:nth-child(2){animation-delay:.1s}.stat:nth-child(3){animation-delay:.15s}.stat:nth-child(4){animation-delay:.2s}.stat:nth-child(5){animation-delay:.25s}
+@keyframes statIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+.stat:hover{transform:translateY(-3px);box-shadow:var(--sh-hover)}
+.stat .label{font-size:12px;color:var(--m);font-weight:500}
+.stat .value{font-size:25px;font-weight:700;margin-top:7px;line-height:1}
+.stat .si{position:absolute;right:14px;top:14px;font-size:22px;opacity:.22;transition:opacity var(--tm),transform var(--tm)}
+.stat:hover .si{opacity:.38;transform:scale(1.15) rotate(-8deg)}
+.stat.p{border-left:4px solid var(--p)}.stat.b{border-left:4px solid #2563eb}.stat.w{border-left:4px solid var(--warn)}.stat.d{border-left:4px solid var(--danger)}.stat.pp{border-left:4px solid #7c3aed}
+
+.dash-grid{display:grid;grid-template-columns:1.15fr 1fr;gap:16px;margin-bottom:16px}
+@media(max-width:1000px){.dash-grid{grid-template-columns:1fr}}
+.panel{background:var(--card);border:1px solid var(--b);border-radius:var(--r);box-shadow:var(--sh);overflow:hidden;transition:box-shadow var(--tm),border-color var(--tm)}
+.panel:hover{box-shadow:var(--sh-hover);border-color:#cbd5e1}
+.panel-head{padding:13px 17px;border-bottom:1px solid var(--b);display:flex;align-items:center;gap:8px}
+.panel-head h3{font-size:13.5px;font-weight:700}
+.panel-body{padding:15px 17px}
+
+.donut-wrap{display:flex;align-items:center;gap:22px;flex-wrap:wrap}
+.donut{width:140px;height:140px;border-radius:50%;flex-shrink:0;position:relative;transition:transform var(--tm) var(--ease);animation:donutIn .6s var(--ease)}
+@keyframes donutIn{from{transform:rotate(-90deg) scale(.8);opacity:0}to{transform:none;opacity:1}}
+.donut:hover{transform:scale(1.06)}
+.donut::after{content:'';position:absolute;inset:24px;background:var(--card);border-radius:50%}
+.donut-c{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:1}
+.donut-c .n{font-size:21px;font-weight:700}
+.donut-c .t{font-size:10px;color:var(--m)}
+.legend{flex:1;min-width:170px;display:flex;flex-direction:column;gap:6px}
+.li-row{display:flex;align-items:center;gap:8px;font-size:12.5px;padding:4px 6px;border-radius:6px;transition:background var(--tf)}
+.li-row:hover{background:var(--bg)}
+.li-row .dot{width:10px;height:10px;border-radius:3px;flex-shrink:0;transition:transform var(--tf)}
+.li-row:hover .dot{transform:scale(1.3)}
+.li-row .cnt{margin-left:auto;font-weight:600}
+
+.list-clean{list-style:none;display:flex;flex-direction:column}
+.list-clean li{display:flex;align-items:center;gap:10px;padding:9px 4px;border-bottom:1px solid var(--b);font-size:13px;transition:background var(--tf),padding-left var(--tf);border-radius:6px}
+.list-clean li:hover{background:var(--bg);padding-left:8px}
+.list-clean li:last-child{border-bottom:none}
+.list-clean .main{flex:1;min-width:0}
+.list-clean .nm{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.list-clean .sb{font-size:11.5px;color:var(--m)}
+.list-clean .right{font-size:11.5px;color:var(--m);text-align:right;white-space:nowrap}
+
+.tbl-wrap{overflow-x:auto;border-radius:var(--r);border:1px solid var(--b);background:var(--card)}
+table{width:100%;border-collapse:collapse;font-size:13px;min-width:820px}
+thead th{background:#f8fafc;text-align:left;padding:11px 12px;font-weight:600;font-size:11px;color:var(--m);text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid var(--b);position:sticky;top:0;cursor:pointer;user-select:none;white-space:nowrap;transition:background var(--tf),color var(--tf)}
+thead th:hover{background:#f1f5f9;color:var(--t)}
+thead th .arr{font-size:9px;margin-left:3px;opacity:.5}
+thead th.sorted .arr{opacity:1;color:var(--p)}
+tbody td{padding:10px 12px;border-bottom:1px solid var(--b);vertical-align:middle}
+tbody tr{transition:background var(--tf);animation:rowIn .3s var(--ease) backwards}
+tbody tr:nth-child(1){animation-delay:.02s}tbody tr:nth-child(2){animation-delay:.04s}tbody tr:nth-child(3){animation-delay:.06s}tbody tr:nth-child(4){animation-delay:.08s}tbody tr:nth-child(5){animation-delay:.10s}tbody tr:nth-child(6){animation-delay:.12s}
+@keyframes rowIn{from{opacity:0;transform:translateX(-6px)}to{opacity:1;transform:none}}
+tbody tr:last-child td{border-bottom:none}
+tbody tr:nth-child(even){background:#fafbfc}
+tbody tr:hover{background:#f0fdfa}
+.td-act{white-space:nowrap;text-align:right}
+.td-name{font-weight:600}
+.td-sub{font-size:11.5px;color:var(--m)}
+.td-sn{font-family:ui-monospace,Menlo,monospace;font-size:12px}
+
+.bdg{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:600;white-space:nowrap;transition:transform var(--tf)}
+.bdg:hover{transform:scale(1.05)}
+.bdg-baik{background:#dcfce7;color:#166534}
+.bdg-normal{background:#dbeafe;color:#1e40af}
+.bdg-layak{background:#ccfbf1;color:#0f766e}
+.bdg-perhatian{background:#fef9c3;color:#854d0e}
+.bdg-tidak{background:#fee2e2;color:#991b1b}
+.bdg-ganti{background:#ffedd5;color:#9a3412}
+.bdg-perbaikan{background:#ede9fe;color:#5b21b6}
+.bdg-moved{background:#e0f2fe;color:#0369a1;font-size:10px;margin-top:3px;display:inline-block;animation:badgeIn .4s var(--ease)}
+@keyframes badgeIn{from{opacity:0;transform:scale(.6)}to{opacity:1;transform:none}}
+.bdg-cat{background:#f1f5f9;color:#475569;font-size:10.5px}
+
+.empty{text-align:center;padding:46px 20px;color:var(--m);animation:pageIn .4s var(--ease)}
+.empty .ico{font-size:44px;opacity:.35;margin-bottom:10px;display:inline-block;animation:bounce 2s ease-in-out infinite}
+@keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+.empty h3{font-size:15px;color:var(--t);margin-bottom:4px}
+.empty p{font-size:13px;margin-bottom:14px}
+
+.modal-bd{position:fixed;inset:0;background:rgba(15,23,42,.55);z-index:200;display:none;align-items:flex-start;justify-content:center;padding:30px 16px;overflow-y:auto;animation:fadeIn var(--tm) var(--ease)}
+.modal-bd.on{display:flex}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+.modal{background:var(--card);border-radius:16px;width:100%;max-width:560px;box-shadow:0 20px 60px rgba(0,0,0,.3);animation:mIn .28s var(--ease);margin:auto}
+.modal.wide{max-width:720px}
+@keyframes mIn{from{opacity:0;transform:translateY(-16px) scale(.96)}to{opacity:1;transform:none}}
+.m-head{padding:17px 20px;border-bottom:1px solid var(--b);display:flex;align-items:center;gap:10px}
+.m-head h2{font-size:15.5px;font-weight:700;flex:1}
+.m-x{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;color:var(--m);font-size:18px;transition:background var(--tf),color var(--tf),transform var(--tf)}
+.m-x:hover{background:var(--bg);color:var(--t);transform:rotate(90deg)}
+.m-body{padding:19px 20px;max-height:65vh;overflow-y:auto}
+.m-foot{padding:15px 20px;border-top:1px solid var(--b);display:flex;gap:10px;justify-content:flex-end}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:13px}
+.form-grid .full{grid-column:1/-1}
+@media(max-width:520px){.form-grid{grid-template-columns:1fr}}
+.field{animation:fieldIn .3s var(--ease) backwards}
+.field:nth-child(1){animation-delay:.02s}.field:nth-child(2){animation-delay:.04s}.field:nth-child(3){animation-delay:.06s}.field:nth-child(4){animation-delay:.08s}.field:nth-child(5){animation-delay:.10s}
+@keyframes fieldIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+.field label{display:block;font-size:12.5px;font-weight:600;margin-bottom:5px;color:var(--t)}
+.field label .req{color:var(--danger)}
+.field .hint{font-size:11px;color:var(--m);margin-top:4px}
+.field .err{font-size:11.5px;color:var(--danger);margin-top:4px;display:none}
+.field.invalid .input,.field.invalid .select{border-color:var(--danger);animation:shake .3s var(--ease)}
+.field.invalid .err{display:block;animation:shake .3s var(--ease)}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-4px)}75%{transform:translateX(4px)}}
+textarea.input{resize:vertical;min-height:62px}
+
+#toasts{position:fixed;top:16px;right:16px;z-index:9000;display:flex;flex-direction:column;gap:8px}
+.toast{background:#0f172a;color:#fff;padding:11px 15px;border-radius:10px;font-size:13px;font-weight:500;box-shadow:0 8px 24px rgba(0,0,0,.25);display:flex;align-items:center;gap:9px;animation:tIn .3s var(--ease);max-width:340px;position:relative;overflow:hidden}
+.toast::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px;background:rgba(255,255,255,.35);transform-origin:left;animation:tProgress 3s linear forwards}
+@keyframes tProgress{from{transform:scaleX(1)}to{transform:scaleX(0)}}
+.toast.ok{background:#065f46}.toast.err{background:#991b1b}.toast.info{background:#1e40af}
+@keyframes tIn{from{opacity:0;transform:translateX(30px)}to{opacity:1;transform:none}}
+.toast.out{animation:tOut .3s var(--ease) forwards}
+@keyframes tOut{to{opacity:0;transform:translateX(30px)}}
+
+.confirm-ico{width:52px;height:52px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:24px;margin:0 auto 14px;animation:iconPop .4s var(--ease)}
+@keyframes iconPop{from{transform:scale(0) rotate(-180deg);opacity:0}to{transform:none;opacity:1}}
+.confirm-ico.d{background:#fee2e2;color:var(--danger)}
+.confirm-ico.w{background:#fef3c7;color:var(--warn)}
+.confirm-body{text-align:center;padding:8px 0}
+.confirm-body h3{font-size:16px;margin-bottom:6px}
+.confirm-body p{color:var(--m);font-size:13px}
+
+.tabs{display:flex;gap:4px;background:var(--bg);padding:4px;border-radius:10px;margin-bottom:16px;width:fit-content;flex-wrap:wrap}
+.tab{padding:8px 15px;border-radius:7px;font-size:13px;font-weight:600;color:var(--m);transition:all var(--tf) var(--ease)}
+.tab:hover{color:var(--t)}
+.tab.on{background:var(--card);color:var(--p);box-shadow:var(--sh);transform:translateY(-1px)}
+
+@media(max-width:900px){.sidebar{transform:translateX(-100%)}.sidebar.on{transform:none;box-shadow:0 0 40px rgba(0,0,0,.3)}.main{margin-left:0}.burger{display:block}.search-global{display:none}.content{padding:16px}}
+@media(max-width:600px){.page-head .actions{width:100%;margin-left:0}.page-head .actions .btn{flex:1;justify-content:center}.stat .value{font-size:21px}}
+
+@page{size:A4;margin:15mm}
+.print-only{display:none}
+@media print{
+  *,*::before,*::after{animation:none!important;transition:none!important}
+  body{background:#fff;font-size:11px}
+  .sidebar,.topbar,.no-print,#toasts,.overlay,.modal-bd{display:none!important}
+  .main{margin-left:0}.content{padding:0;max-width:100%}
+  .print-only{display:block}.app{display:block}
+  .print-header{display:flex;align-items:center;gap:14px;border-bottom:2px solid #0f172a;padding-bottom:12px;margin-bottom:14px}
+  .print-header .plogo{width:56px;height:56px;border-radius:10px;background:#0d9488;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:22px;overflow:hidden;flex-shrink:0}
+  .print-header .plogo img{width:100%;height:100%;object-fit:cover}
+  .print-header .pinfo{flex:1}
+  .print-header .pinfo .pco{font-size:15px;font-weight:700}
+  .print-header .pinfo .ptitle{font-size:12px;color:#334155}
+  .print-header .pinfo .pcat{font-size:11px;color:#64748b;margin-top:2px}
+  .print-meta{display:flex;justify-content:space-between;font-size:10.5px;color:#64748b;margin-bottom:10px}
+  table{min-width:0!important;font-size:10px;width:100%}
+  thead th{background:#f1f5f9!important;color:#0f172a!important;position:static;padding:6px}
+  tbody td{padding:5px 6px;border-color:#cbd5e1}
+  tbody tr{background:#fff!important}
+  tbody tr:nth-child(even){background:#f8fafc!important}
+  .td-act,.no-print-col{display:none!important}
+  .bdg{border:1px solid #cbd5e1;font-size:9px;padding:1px 5px}
+  .print-footer{margin-top:22px;display:flex;justify-content:flex-end}
+  .print-sign{text-align:center;font-size:10.5px}
+  .print-sign .space{height:56px}
+  .print-sign .nm{font-weight:700;text-decoration:underline}
+  .print-footer-left{margin-top:18px;font-size:9.5px;color:#64748b;border-top:1px solid #cbd5e1;padding-top:8px;display:flex;justify-content:space-between}
+}
+</style>
+</head>
+<body>
+
+<div id="skeleton">
+  <div class="sk-logo"></div>
+  <div class="sk-line w1"></div>
+  <div class="sk-line w2"></div>
+</div>
+
+<div id="toasts"></div>
+
+<div class="app">
+  <aside class="sidebar" id="sidebar">
+    <div class="sb-head">
+      <div class="sb-logo" id="sbLogo">BSC</div>
+      <div>
+        <div class="sb-name" id="sbName">Inventaris BSC</div>
+        <div class="sb-sub" id="sbSub">BlondoSport Center</div>
+      </div>
+    </div>
+    <nav class="nav" id="nav"></nav>
+  </aside>
+  <div class="overlay" id="overlay"></div>
+
+  <div class="main">
+    <header class="topbar">
+      <button class="burger" id="burger" aria-label="Menu">☰</button>
+      <div>
+        <div class="tb-title" id="tbTitle">Dashboard</div>
+        <div class="tb-sub" id="tbSub">Inventaris Perangkat</div>
+      </div>
+      <div class="tb-spacer"></div>
+      <button class="search-global" id="gsBtn">🔍 Cari perangkat <kbd>Ctrl K</kbd></button>
+    </header>
+    <main class="content" id="content"></main>
+  </div>
+</div>
+
+<div class="modal-bd" id="modalRoot"></div>
+
+<script>
+'use strict';
+const K={settings:'bsc_settings',rooms:'bsc_rooms',network:'bsc_network',cctv:'bsc_cctv',kasir:'bsc_kasir',bendahara:'bsc_bendahara',server:'bsc_server',printer:'bsc_printer',logs:'bsc_logs'};
+const KON=['Baik','Normal','Masih Layak','Perlu Perhatian','Tidak Layak','Perlu Diganti Segera','Sedang Perbaikan'];
+const KON_CLASS={'Baik':'bdg-baik','Normal':'bdg-normal','Masih Layak':'bdg-layak','Perlu Perhatian':'bdg-perhatian','Tidak Layak':'bdg-tidak','Perlu Diganti Segera':'bdg-ganti','Sedang Perbaikan':'bdg-perbaikan'};
+const KON_COLOR={'Baik':'#16a34a','Normal':'#2563eb','Masih Layak':'#0d9488','Perlu Perhatian':'#f59e0b','Tidak Layak':'#dc2626','Perlu Diganti Segera':'#ea580c','Sedang Perbaikan':'#7c3aed'};
+const ACTIONS=['tambah','edit','hapus','moving','settings','import','export'];
+const DEFAULT_SETTINGS={appName:'Inventaris BSC',appSubtitle:'BlondoSport Center',companyName:'BlondoSport Center',inventoryTitle:'Inventaris Perangkat BSC',logo:'',picName:'',picNip:'',theme:'#0d9488'};
+const DEF_ROOM=['Speaker','Speaker','Woofer','Mic','Mic','Processor Audio','Power Amplifier','TV','Komputer','Monitor','Keyboard','Mouse','Kabel Jack 3.5mm to RCA','Kabel Power','Kabel Power','Kabel Power','Kabel Power','Kabel Monitor','Kabel TV ke Komputer','Flashdisk Key','Meja','Kursi Sofa','Proyektor'];
+
+const state={view:{type:'dashboard'},settings:{...DEFAULT_SETTINGS},rooms:[],network:[],cctv:{dvrs:[],cameras:[]},kasir:{carwash:[],karaoke:[]},bendahara:[],server:[],printer:[],logs:[],roomExpanded:false,filters:{}};
+
+const $=(s,r=document)=>r.querySelector(s);
+const $$=(s,r=document)=>[...r.querySelectorAll(s)];
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+const esc=(s='')=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const nowISO=()=>new Date().toISOString();
+const today=()=>{const d=new Date();return new Date(d-d.getTimezoneOffset()*6e4).toISOString().slice(0,10)};
+const fmtDate=iso=>{if(!iso)return '-';const d=new Date(iso);return isNaN(d)?'-':d.toLocaleDateString('id-ID',{day:'2-digit',month:'short',year:'numeric'})};
+const fmtDateTime=iso=>{if(!iso)return '-';const d=new Date(iso);return isNaN(d)?'-':d.toLocaleString('id-ID',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'})};
+const isValidDate=s=>{if(!/^\d{4}-\d{2}-\d{2}$/.test(s||''))return false;const d=new Date(s+'T00:00:00Z');return !isNaN(d)&&d.toISOString().slice(0,10)===s};
+
+function toast(msg,type='info',ms=3000){
+  const wrap=$('#toasts');
+  const el=document.createElement('div');
+  el.className='toast '+type;
+  const icon=type==='ok'?'✅':type==='err'?'⚠️':'ℹ️';
+  el.innerHTML=`<span>${icon}</span><span>${esc(msg)}</span>`;
+  wrap.appendChild(el);
+  setTimeout(()=>{el.classList.add('out');setTimeout(()=>el.remove(),280)},ms);
+}
+
+function confirmBox({title,message,okText='Ya, Lanjutkan',danger=true,double=false}){
+  return new Promise(resolve=>{
+    const root=$('#modalRoot');
+    let step=0;
+    const render=()=>{
+      root.innerHTML=`<div class="modal" style="max-width:420px"><div class="m-body"><div class="confirm-body"><div class="confirm-ico ${danger?'d':'w'}">${danger?'⚠️':'❓'}</div><h3>${step===0?esc(title):'Konfirmasi Terakhir'}</h3><p>${step===0?esc(message):'Tindakan ini tidak dapat dibatalkan. Yakin?'}</p></div></div><div class="m-foot" style="justify-content:center"><button class="btn btn-o" data-act="cancel">Batal</button><button class="btn ${danger?'btn-d':'btn-p'}" data-act="ok">${step===0?esc(okText):'Ya, Saya Yakin'}</button></div></div>`;
+      root.classList.add('on');
+      root.querySelector('[data-act="cancel"]').onclick=()=>{close();resolve(false)};
+      root.querySelector('[data-act="ok"]').onclick=()=>{if(double&&step===0){step=1;render()}else{close();resolve(true)}};
+    };
+    const close=()=>{root.classList.remove('on');root.innerHTML=''};
+    render();
+  });
+}
+
+function loadAll(){
+  try{const s=JSON.parse(localStorage.getItem(K.settings)||'null');state.settings=(s&&typeof s==='object')?{...DEFAULT_SETTINGS,...s}:{...DEFAULT_SETTINGS}}catch{state.settings={...DEFAULT_SETTINGS}}
+  try{
+    const r=JSON.parse(localStorage.getItem(K.rooms)||'null');
+    if(Array.isArray(r)&&r.length)state.rooms=r.map((rm,i)=>({id:rm.id||'room-'+(i+1),name:rm.name||('Room '+(i+1)),devices:Array.isArray(rm.devices)?rm.devices:[]}));
+    else throw 0;
+  }catch{state.rooms=Array.from({length:20},(_,i)=>({id:'room-'+(i+1),name:'Room '+(i+1),devices:[]}))}
+  for(let i=1;i<=20;i++)if(!state.rooms.find(r=>r.id==='room-'+i))state.rooms.push({id:'room-'+i,name:'Room '+i,devices:[]});
+  state.rooms.sort((a,b)=>parseInt(a.id.split('-')[1])-parseInt(b.id.split('-')[1]));
+  state.network=safeArr(K.network);
+  try{const c=JSON.parse(localStorage.getItem(K.cctv)||'null');state.cctv=(c&&typeof c==='object')?{dvrs:Array.isArray(c.dvrs)?c.dvrs:[],cameras:Array.isArray(c.cameras)?c.cameras:[]}:{dvrs:[],cameras:[]}}catch{state.cctv={dvrs:[],cameras:[]}}
+  try{const k=JSON.parse(localStorage.getItem(K.kasir)||'null');state.kasir=(k&&typeof k==='object')?{carwash:Array.isArray(k.carwash)?k.carwash:[],karaoke:Array.isArray(k.karaoke)?k.karaoke:[]}:{carwash:[],karaoke:[]}}catch{state.kasir={carwash:[],karaoke:[]}}
+  state.bendahara=safeArr(K.bendahara);state.server=safeArr(K.server);state.printer=safeArr(K.printer);
+  try{const l=JSON.parse(localStorage.getItem(K.logs)||'null');state.logs=Array.isArray(l)?l:[]}catch{state.logs=[]}
+}
+function safeArr(key){try{const v=JSON.parse(localStorage.getItem(key)||'null');return Array.isArray(v)?v:[]}catch{return[]}}
+function save(key){
+  try{
+    if(key==='rooms')localStorage.setItem(K.rooms,JSON.stringify(state.rooms));
+    else localStorage.setItem(K[key],JSON.stringify(state[key]));
+    return true;
+  }catch{toast('Gagal simpan: storage penuh / diblokir.','err',5000);return false}
+}
+function addLog(category,action,detail){
+  state.logs.unshift({id:uid(),ts:nowISO(),category,action,detail});
+  if(state.logs.length>3000)state.logs.length=3000;
+  save('logs');
+}
+
+function validateDevice(data,devices,editingId){
+  const err={};
+  if(!data.nama.trim())err.nama='Nama perangkat wajib diisi.';
+  if(!data.sn.trim())err.sn='Serial Number wajib diisi.';
+  else{const snL=data.sn.trim().toLowerCase();const dup=devices.find(d=>d.id!==editingId&&(d.sn||'').trim().toLowerCase()===snL);if(dup)err.sn='Serial Number sudah dipakai perangkat lain di kategori ini.';}
+  if(!data.kondisi)err.kondisi='Kondisi wajib dipilih.';
+  if(data.tahun!==''&&data.tahun!=null){
+    if(!/^\d{4}$/.test(String(data.tahun)))err.tahun='Tahun harus 4 digit.';
+    else{const y=Number(data.tahun);const now=new Date().getFullYear();if(y<1990||y>now)err.tahun=`Tahun harus antara 1990 dan ${now}.`;}
+  }else err.tahun='Tahun masuk wajib diisi.';
+  if(data.tglService&&!isValidDate(data.tglService))err.tglService='Format tanggal tidak valid.';
+  return err;
+}
+
+function renderSidebar(){
+  const nav=$('#nav');
+  const v=state.view;
+  const item=(key,ico,label,extra='')=>`<div class="nav-item${isActive(key)?' on':''}" data-nav="${key}"><span class="ico">${ico}</span><span>${label}</span>${extra}</div>`;
+  let html='';
+  html+=item('dashboard','🏠','Dashboard');
+  html+=`<div class="nav-item${v.type==='room'?' on':''}${state.roomExpanded?' open':''}" data-nav="rooms-toggle"><span class="ico">🎤</span><span>Room Karaoke</span><span class="chev">▶</span></div><div class="nav-sub grid${state.roomExpanded?' open':''}">`;
+  state.rooms.forEach(r=>{
+    const on=(v.type==='room'&&v.roomId===r.id)?' on':'';
+    html+=`<div class="nav-item${on}" data-nav="room" data-room="${r.id}">${esc(r.name.replace('Room ',''))}</div>`;
+  });
+  html+='</div>';
+  html+=item('network','🌐','Jaringan');
+  html+=item('cctv','📹','CCTV');
+  html+=`<div class="nav-item${v.type==='kasir'?' on':''}" data-nav="kasir-toggle"><span class="ico">💰</span><span>Kasir</span><span class="chev">▶</span></div><div class="nav-sub${v.type==='kasir'?' open':''}"><div class="nav-item${v.type==='kasir'&&v.sub==='carwash'?' on':''}" data-nav="kasir" data-sub="carwash">Kasir Carwash</div><div class="nav-item${v.type==='kasir'&&v.sub==='karaoke'?' on':''}" data-nav="kasir" data-sub="karaoke">Kasir Karaoke</div></div>`;
+  html+=item('bendahara','📊','Bendahara');
+  html+=item('server','🖥️','Server');
+  html+=item('printer','🖨️','Printer & Fingerprint');
+  html+=`<div class="nav-label">Sistem</div>`;
+  html+=item('settings','⚙️','Pengaturan');
+  html+=item('logs','📜','Log Aktivitas');
+  nav.innerHTML=html;
+  nav.querySelectorAll('[data-nav]').forEach(el=>{
+    el.onclick=()=>{
+      const k=el.dataset.nav;
+      if(k==='rooms-toggle'){state.roomExpanded=!state.roomExpanded;renderSidebar();return}
+      if(k==='kasir-toggle')state.view={type:'kasir',sub:state.view.sub||'carwash'};
+      else if(k==='room'){state.roomExpanded=true;state.view={type:'room',roomId:el.dataset.room}}
+      else if(k==='kasir')state.view={type:'kasir',sub:el.dataset.sub||'carwash'};
+      else state.view={type:k};
+      renderSidebar();renderContent();updateTopbar();closeSidebarMobile();
+    };
+  });
+}
+function isActive(key){return state.view.type===key}
+
+function applySettingsUI(){
+  const s=state.settings;
+  $('#sbName').textContent=s.appName||'Inventaris BSC';
+  $('#sbSub').textContent=s.appSubtitle||'BlondoSport Center';
+  const logo=$('#sbLogo');
+  if(s.logo)logo.innerHTML=`<img src="${s.logo}" alt="logo">`;
+  else logo.textContent=(s.appName||'BSC').slice(0,3).toUpperCase();
+  document.documentElement.style.setProperty('--p',s.theme||'#0d9488');
+  document.title=(s.appName||'Inventaris BSC')+' — '+(s.appSubtitle||'');
+}
+function updateTopbar(){
+  const v=state.view;let title='',sub='';
+  if(v.type==='dashboard'){title='Dashboard';sub='Ringkasan inventaris'}
+  else if(v.type==='room'){const r=state.rooms.find(x=>x.id===v.roomId);title=r?r.name:'Room';sub='Inventaris perangkat room'}
+  else if(v.type==='network'){title='Jaringan';sub='Perangkat jaringan'}
+  else if(v.type==='cctv'){title='CCTV';sub='DVR & kamera'}
+  else if(v.type==='kasir'){title='Kasir — '+(v.sub==='karaoke'?'Karaoke':'Carwash');sub='Perangkat kasir'}
+  else if(v.type==='bendahara'){title='Bendahara';sub='Perangkat bendahara'}
+  else if(v.type==='server'){title='Server';sub='Perangkat server'}
+  else if(v.type==='printer'){title='Printer & Fingerprint';sub='Perangkat printer & fingerprint'}
+  else if(v.type==='settings'){title='Pengaturan';sub='Konfigurasi aplikasi'}
+  else if(v.type==='logs'){title='Log Aktivitas';sub='Riwayat perubahan data'}
+  $('#tbTitle').textContent=title;$('#tbSub').textContent=sub;
+}
+
+function renderContent(){
+  const c=$('#content');const v=state.view;
+  window.scrollTo({top:0,behavior:'smooth'});
+  switch(v.type){
+    case 'dashboard':c.innerHTML=renderDashboard();bindDashboard();break;
+    case 'room':c.innerHTML=renderRoom(v.roomId);bindRoom(v.roomId);break;
+    case 'network':c.innerHTML=renderStandalone('network');bindStandalone('network');break;
+    case 'bendahara':c.innerHTML=renderStandalone('bendahara');bindStandalone('bendahara');break;
+    case 'server':c.innerHTML=renderStandalone('server');bindStandalone('server');break;
+    case 'printer':c.innerHTML=renderStandalone('printer');bindStandalone('printer');break;
+    case 'cctv':c.innerHTML=renderCCTV();bindCCTV();break;
+    case 'kasir':c.innerHTML=renderKasir(v.sub||'carwash');bindKasir(v.sub||'carwash');break;
+    case 'settings':c.innerHTML=renderSettings();bindSettings();break;
+    case 'logs':c.innerHTML=renderLogs();bindLogs();break;
+    default:c.innerHTML='<p>Halaman tidak ditemukan.</p>';
+  }
+}
+
+function allDevices(){
+  const a=[];
+  state.rooms.forEach(r=>r.devices.forEach(d=>a.push({...d,_catLabel:r.name})));
+  state.network.forEach(d=>a.push({...d,_catLabel:'Jaringan'}));
+  state.cctv.dvrs.forEach(d=>a.push({...d,_catLabel:'CCTV DVR'}));
+  state.cctv.cameras.forEach(d=>a.push({...d,_catLabel:'CCTV Kamera'}));
+  state.kasir.carwash.forEach(d=>a.push({...d,_catLabel:'Kasir Carwash'}));
+  state.kasir.karaoke.forEach(d=>a.push({...d,_catLabel:'Kasir Karaoke'}));
+  state.bendahara.forEach(d=>a.push({...d,_catLabel:'Bendahara'}));
+  state.server.forEach(d=>a.push({...d,_catLabel:'Server'}));
+  state.printer.forEach(d=>a.push({...d,_catLabel:'Printer & Fingerprint'}));
+  return a;
+}
+
+function renderDashboard(){
+  const all=allDevices();
+  const total=all.length;
+  const roomsUsed=state.rooms.filter(r=>r.devices.length).length;
+  const cnt={};KON.forEach(k=>cnt[k]=0);
+  all.forEach(d=>{if(cnt[d.kondisi]!==undefined)cnt[d.kondisi]++});
+  const perlu=cnt['Perlu Perhatian']+cnt['Perlu Diganti Segera'];
+  const tidak=cnt['Tidak Layak'];const perbaikan=cnt['Sedang Perbaikan'];
+  let conic='#e2e8f0';
+  if(total>0){
+    let acc=0;const segs=[];
+    KON.forEach(k=>{if(cnt[k]===0)return;const pct=(cnt[k]/total)*100;segs.push(`${KON_COLOR[k]} ${acc}% ${acc+pct}%`);acc+=pct});
+    conic=`conic-gradient(${segs.join(',')})`;
+  }
+  const legend=KON.map(k=>`<div class="li-row"><span class="dot" style="background:${KON_COLOR[k]}"></span><span>${k}</span><span class="cnt">${cnt[k]}</span></div>`).join('');
+  const svc=all.filter(d=>d.tglService).sort((a,b)=>new Date(a.tglService)-new Date(b.tglService)).slice(0,6);
+  const svcList=svc.length?svc.map(d=>`<li><div class="main"><div class="nm">${esc(d.nama)}</div><div class="sb">${esc(d._catLabel)} · ${esc(d.sn||'-')}</div></div><div class="right">${fmtDate(d.tglService)}</div></li>`).join(''):'<li><span class="td-sub">Belum ada data service.</span></li>';
+  const bad=all.filter(d=>d.kondisi==='Tidak Layak'||d.kondisi==='Perlu Diganti Segera').slice(0,6);
+  const badList=bad.length?bad.map(d=>`<li><div class="main"><div class="nm">${esc(d.nama)}</div><div class="sb">${esc(d._catLabel)} · ${esc(d.sn||'-')}</div></div><div class="right"><span class="bdg ${KON_CLASS[d.kondisi]}">${esc(d.kondisi)}</span></div></li>`).join(''):'<li><span class="td-sub">Tidak ada perangkat bermasalah. 🎉</span></li>';
+  const cats=[
+    {label:'Room Karaoke',count:state.rooms.reduce((s,r)=>s+r.devices.length,0),ico:'🎤'},
+    {label:'Jaringan',count:state.network.length,ico:'🌐'},
+    {label:'CCTV',count:state.cctv.dvrs.length+state.cctv.cameras.length,ico:'📹'},
+    {label:'Kasir',count:state.kasir.carwash.length+state.kasir.karaoke.length,ico:'💰'},
+    {label:'Bendahara',count:state.bendahara.length,ico:'📊'},
+    {label:'Server',count:state.server.length,ico:'🖥️'},
+    {label:'Printer & Fingerprint',count:state.printer.length,ico:'🖨️'}
+  ];
+  const catHTML=cats.map(c=>`<div class="li-row"><span style="font-size:15px">${c.ico}</span><span>${c.label}</span><span class="cnt">${c.count}</span></div>`).join('');
+  return `
+  <div class="page-head no-print"><div><h1>Dashboard</h1><p>Ringkasan inventaris perangkat</p></div><div class="actions"><button class="btn btn-o" id="dashPrint">🖨️ Cetak Rekap PDF A4</button></div></div>
+  <div class="stat-grid no-print">
+    <div class="stat p"><div class="si">📦</div><div class="label">Total Perangkat</div><div class="value">${total}</div></div>
+    <div class="stat b"><div class="si">🚪</div><div class="label">Room Terisi</div><div class="value">${roomsUsed}<small style="font-size:13px;color:var(--m)">/20</small></div></div>
+    <div class="stat w"><div class="si">⚠️</div><div class="label">Perlu Perhatian</div><div class="value">${perlu}</div></div>
+    <div class="stat d"><div class="si">❌</div><div class="label">Tidak Layak</div><div class="value">${tidak}</div></div>
+    <div class="stat pp"><div class="si">🔧</div><div class="label">Sedang Perbaikan</div><div class="value">${perbaikan}</div></div>
+  </div>
+  <div class="dash-grid no-print">
+    <div class="panel"><div class="panel-head"><h3>Kondisi Perangkat</h3></div><div class="panel-body"><div class="donut-wrap"><div class="donut" style="background:${conic}"><div class="donut-c"><div class="n">${total}</div><div class="t">Perangkat</div></div></div><div class="legend">${legend}</div></div></div></div>
+    <div class="panel"><div class="panel-head"><h3>Statistik per Kategori</h3></div><div class="panel-body"><div class="legend">${catHTML}</div></div></div>
+  </div>
+  <div class="dash-grid no-print">
+    <div class="panel"><div class="panel-head"><h3>🕒 Service Terakhir Terlama</h3></div><div class="panel-body"><ul class="list-clean">${svcList}</ul></div></div>
+    <div class="panel"><div class="panel-head"><h3>🚨 Tidak Layak / Perlu Diganti</h3></div><div class="panel-body"><ul class="list-clean">${badList}</ul></div></div>
+  </div>
+  <div class="print-only">
+    ${printHeader('Rekap Inventaris Seluruh Kategori')}
+    <table><thead><tr><th>No</th><th>Nama</th><th>Kategori</th><th>Merek</th><th>SN</th><th>Tahun</th><th>Service</th><th>Kondisi</th></tr></thead>
+    <tbody>${all.length?all.map((d,i)=>`<tr><td>${i+1}</td><td>${esc(d.nama)}</td><td>${esc(d._catLabel)}</td><td>${esc(d.merek||'-')}</td><td>${esc(d.sn||'-')}</td><td>${esc(d.tahun||'-')}</td><td>${fmtDate(d.tglService)}</td><td>${esc(d.kondisi)}</td></tr>`).join(''):'<tr><td colspan="8" style="text-align:center">Belum ada data</td></tr>'}</tbody></table>
+    ${printFooter()}
+  </div>`;
+}
+function bindDashboard(){const b=$('#dashPrint');if(b)b.onclick=()=>window.print()}
+
+function kondisiBadge(k){return `<span class="bdg ${KON_CLASS[k]||'bdg-baik'}">${esc(k||'-')}</span>`}
+
+function renderDeviceTable(devices,opts){
+  const {key,showMove=false,categoryName='',roomId=''}=opts;
+  const flt=state.filters[key]||{};
+  const search=(flt.search||'').toLowerCase();
+  const kondisi=flt.kondisi||'';const tahun=flt.tahun||'';
+  const sortBy=flt.sortBy||'';const sortDir=flt.sortDir||'asc';
+  let list=devices.filter(d=>{
+    if(search){const hay=`${d.nama||''} ${d.merek||''} ${d.sn||''} ${d.keterangan||''}`.toLowerCase();if(!hay.includes(search))return false}
+    if(kondisi&&d.kondisi!==kondisi)return false;
+    if(tahun&&String(d.tahun)!==String(tahun))return false;
+    return true;
+  });
+  if(sortBy)list=list.slice().sort((a,b)=>{
+    let va=a[sortBy]||'',vb=b[sortBy]||'';
+    if(sortBy==='tahun'){va=Number(va)||0;vb=Number(vb)||0}
+    else{va=String(va).toLowerCase();vb=String(vb).toLowerCase()}
+    if(va<vb)return sortDir==='asc'?-1:1;
+    if(va>vb)return sortDir==='asc'?1:-1;
+    return 0;
+  });
+  const arr=(col)=>flt.sortBy!==col?'<span class="arr">↕</span>':`<span class="arr">${flt.sortDir==='asc'?'↑':'↓'}</span>`;
+  const th=(col,label)=>`<th data-sort="${col}" class="${flt.sortBy===col?'sorted':''}">${label}${arr(col)}</th>`;
+  const years=[...new Set(devices.map(d=>d.tahun).filter(Boolean))].sort((a,b)=>b-a);
+  const rows=list.map(d=>`
+    <tr>
+      <td><div class="td-name">${esc(d.nama)}</div>${d.keterangan?`<div class="td-sub" style="max-width:220px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(d.keterangan)}</div>`:''}${d.movedFromName?`<div><span class="bdg bdg-moved">↩ dari ${esc(d.movedFromName)}</span></div>`:''}</td>
+      <td>${esc(d.merek||'-')}</td><td class="td-sn">${esc(d.sn||'-')}</td><td>${esc(d.tahun||'-')}</td><td>${fmtDate(d.tglService)}</td><td>${kondisiBadge(d.kondisi)}</td>
+      <td class="td-act"><button class="ico-btn" data-act="edit" data-id="${d.id}" title="Edit">✏️</button>${showMove?`<button class="ico-btn" data-act="move" data-id="${d.id}" title="Pindah Room">↔️</button>`:''}<button class="ico-btn danger" data-act="del" data-id="${d.id}" title="Hapus">🗑️</button></td>
+    </tr>`).join('');
+  return `
+  <div class="toolbar no-print">
+    <div class="grow"><input class="input-search" id="flt-${key}-search" placeholder="Cari nama, merek, SN..." value="${esc(search)}"></div>
+    <select class="select" id="flt-${key}-kondisi"><option value="">Semua Kondisi</option>${KON.map(k=>`<option value="${k}" ${kondisi===k?'selected':''}>${k}</option>`).join('')}</select>
+    <select class="select" id="flt-${key}-tahun"><option value="">Semua Tahun</option>${years.map(y=>`<option value="${y}" ${String(tahun)===String(y)?'selected':''}>${y}</option>`).join('')}</select>
+  </div>
+  ${list.length===0?`<div class="card empty" style="padding:44px 20px"><div class="ico">📭</div><h3>${devices.length===0?'Belum ada perangkat':'Tidak ada hasil'}</h3><p>${devices.length===0?'Tambahkan perangkat pertama Anda untuk kategori ini.':'Coba ubah kata kunci / filter.'}</p>${devices.length===0?`<button class="btn btn-p" data-act="add">+ Tambah Perangkat</button>`:''}</div>`:`
+  <div class="tbl-wrap"><table><thead><tr>${th('nama','Nama Perangkat')}${th('merek','Merek/Model')}${th('sn','Serial Number')}${th('tahun','Tahun')}${th('tglService','Service Terakhir')}${th('kondisi','Kondisi')}<th class="no-print-col" style="text-align:right">Aksi</th></tr></thead><tbody>${rows}</tbody></table></div>
+  <p style="margin-top:10px;font-size:12px;color:var(--m)">Menampilkan ${list.length} dari ${devices.length} perangkat.</p>`}
+  <div class="print-only">
+    ${printHeader(categoryName)}
+    <table><thead><tr><th>No</th><th>Nama</th><th>Merek/Model</th><th>SN</th><th>Tahun</th><th>Service</th><th>Kondisi</th><th>Keterangan</th></tr></thead>
+    <tbody>${devices.length?devices.map((d,i)=>`<tr><td>${i+1}</td><td>${esc(d.nama)}</td><td>${esc(d.merek||'-')}</td><td>${esc(d.sn||'-')}</td><td>${esc(d.tahun||'-')}</td><td>${fmtDate(d.tglService)}</td><td>${esc(d.kondisi)}</td><td>${esc(d.keterangan||'-')}</td></tr>`).join(''):'<tr><td colspan="8" style="text-align:center">Belum ada data</td></tr>'}</tbody></table>
+    ${printFooter()}
+  </div>`;
+}
+
+function bindTableFilters(key,devices){
+  const setFilter=patch=>{state.filters[key]={...(state.filters[key]||{}),...patch};renderContent()};
+  const s=document.getElementById(`flt-${key}-search`);
+  if(s)s.oninput=e=>{
+    const val=e.target.value;
+    state.filters[key]={...(state.filters[key]||{}),search:val};
+    renderContent();
+    const ni=document.getElementById(`flt-${key}-search`);
+    if(ni){ni.focus();ni.setSelectionRange(val.length,val.length)}
+  };
+  const k=document.getElementById(`flt-${key}-kondisi`);if(k)k.onchange=e=>setFilter({kondisi:e.target.value});
+  const t=document.getElementById(`flt-${key}-tahun`);if(t)t.onchange=e=>setFilter({tahun:e.target.value});
+  $$('[data-sort]').forEach(th=>{
+    th.onclick=()=>{
+      const col=th.dataset.sort;
+      const cur=state.filters[key]||{};
+      const dir=(cur.sortBy===col&&cur.sortDir==='asc')?'desc':'asc';
+      setFilter({sortBy:col,sortDir:dir});
+    };
+  });
+}
+
+function openDeviceForm(cfg){
+  const {device,devices,categoryKey,categoryName,roomId,roomName,onSave}=cfg;
+  const editing=!!device;const d=device||{};
+  const root=$('#modalRoot');
+  const nowY=new Date().getFullYear();const years=[];
+  for(let y=nowY;y>=1990;y--)years.push(y);
+  root.innerHTML=`
+    <div class="modal">
+      <div class="m-head"><h2>${editing?'Edit':'Tambah'} Perangkat — ${esc(categoryName)}</h2><button class="m-x" data-act="close">✕</button></div>
+      <div class="m-body">
+        <form id="devForm" class="form-grid" novalidate>
+          <div class="field full" data-field="nama"><label>Nama Perangkat <span class="req">*</span></label><input class="input" name="nama" value="${esc(d.nama||'')}" placeholder="cth: Speaker"><div class="err"></div></div>
+          <div class="field" data-field="merek"><label>Merek/Model</label><input class="input" name="merek" value="${esc(d.merek||'')}" placeholder="opsional"><div class="err"></div></div>
+          <div class="field" data-field="sn"><label>Serial Number <span class="req">*</span></label><input class="input" name="sn" value="${esc(d.sn||'')}" placeholder="unik per kategori"><div class="err"></div></div>
+          <div class="field" data-field="tahun"><label>Tahun Masuk <span class="req">*</span></label><select class="select" name="tahun"><option value="">— Pilih Tahun —</option>${years.map(y=>`<option value="${y}" ${String(d.tahun)===String(y)?'selected':''}>${y}</option>`).join('')}</select><div class="err"></div></div>
+          <div class="field" data-field="tglService"><label>Tanggal Terakhir Service</label><input class="input" type="date" name="tglService" value="${d.tglService||''}" max="${today()}"><div class="err"></div></div>
+          <div class="field" data-field="kondisi"><label>Kondisi <span class="req">*</span></label><select class="select" name="kondisi"><option value="">— Pilih Kondisi —</option>${KON.map(k=>`<option value="${k}" ${d.kondisi===k?'selected':''}>${k}</option>`).join('')}</select><div class="err"></div></div>
+          ${categoryKey==='cctv'?`<div class="field" data-field="channel"><label>Channel (1-32)</label><input class="input" type="number" name="channel" min="1" max="32" value="${d.channel||''}"></div>`:''}
+          <div class="field full" data-field="keterangan"><label>Keterangan</label><textarea class="input" name="keterangan" placeholder="opsional">${esc(d.keterangan||'')}</textarea></div>
+          <div class="field full"><label>Room Asal</label><input class="input" value="${esc(roomName||categoryName)}" readonly style="background:#f8fafc;color:var(--m)"></div>
+        </form>
+      </div>
+      <div class="m-foot"><button class="btn btn-o" data-act="close">Batal</button><button class="btn btn-p" data-act="save">💾 Simpan</button></div>
+    </div>`;
+  root.classList.add('on');
+  const close=()=>{root.classList.remove('on');root.innerHTML=''};
+  root.querySelectorAll('[data-act="close"]').forEach(b=>b.onclick=close);
+  root.querySelector('[data-act="save"]').onclick=()=>{
+    const form=root.querySelector('#devForm');
+    form.querySelectorAll('.field').forEach(f=>{f.classList.remove('invalid');const e=f.querySelector('.err');if(e)e.textContent=''});
+    const fd=new FormData(form);
+    const data={
+      nama:(fd.get('nama')||'').trim(),merek:(fd.get('merek')||'').trim(),sn:(fd.get('sn')||'').trim(),
+      tahun:(fd.get('tahun')||'').trim(),tglService:fd.get('tglService')||'',kondisi:fd.get('kondisi')||'',
+      keterangan:(fd.get('keterangan')||'').trim()
+    };
+    if(categoryKey==='cctv'){const ch=parseInt(fd.get('channel')||'');if(!isNaN(ch)&&ch>=1&&ch<=32)data.channel=ch}
+    const errs=validateDevice(data,devices,editing?device.id:null);
+    if(Object.keys(errs).length){
+      Object.entries(errs).forEach(([f,m])=>{const ff=form.querySelector(`[data-field="${f}"]`);if(ff){ff.classList.add('invalid');ff.querySelector('.err').textContent=m}});
+      toast('Periksa kembali form.','err');return;
+    }
+    if(editing){data.id=device.id;data.createdAt=device.createdAt;data.roomId=device.roomId;data.roomName=device.roomName;data.movedFrom=device.movedFrom;data.movedFromName=device.movedFromName;data.channel=device.channel}
+    else{data.id=uid();data.createdAt=nowISO();data.roomId=roomId||null;data.roomName=roomName||null}
+    data.updatedAt=nowISO();
+    onSave(data,editing);
+    close();
+  };
+}
+
+function renderRoom(roomId){
+  const room=state.rooms.find(r=>r.id===roomId);
+  if(!room)return '<p>Room tidak ditemukan.</p>';
+  const devs=room.devices;const empty=devs.length===0;
+  return `
+  <div class="page-head no-print"><div><h1>${esc(room.name)}</h1><p>${devs.length} perangkat terdaftar</p></div><div class="actions"><button class="btn btn-o" data-act="print">🖨️ Cetak PDF A4</button><button class="btn btn-p" data-act="add">+ Tambah Perangkat</button></div></div>
+  ${empty?`<div class="card no-print" style="margin-bottom:14px"><div class="empty" style="padding:44px 20px"><div class="ico">🎤</div><h3>${esc(room.name)} masih kosong</h3><p>Tambahkan perangkat atau gunakan template standar (${DEF_ROOM.length} perangkat).</p><div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap"><button class="btn btn-p" data-act="add">+ Tambah Perangkat</button><button class="btn btn-o" data-act="add-default">+ Template Standar</button></div></div></div>`:''}
+  ${renderDeviceTable(devs,{key:'room-'+roomId,showMove:true,categoryName:room.name,roomId})}`;
+}
+function bindRoom(roomId){
+  const room=state.rooms.find(r=>r.id===roomId);if(!room)return;
+  bindTableFilters('room-'+roomId,room.devices);
+  const rerender=()=>{renderSidebar();renderContent()};
+  $$('[data-act="print"]').forEach(b=>b.onclick=()=>window.print());
+  $$('[data-act="add"]').forEach(b=>b.onclick=()=>openDeviceForm({device:null,devices:room.devices,categoryKey:'room',categoryName:room.name,roomId:room.id,roomName:room.name,onSave:data=>{room.devices.push(data);save('rooms');addLog('Room '+room.name,'tambah',`Tambah "${data.nama}" (SN ${data.sn})`);toast('Perangkat ditambahkan.','ok');rerender()}}));
+  $$('[data-act="add-default"]').forEach(b=>b.onclick=async()=>{
+    const ok=await confirmBox({title:'Tambahkan Template Standar?',message:`Tambahkan ${DEF_ROOM.length} perangkat template ke ${room.name}? SN dibuat placeholder (bisa diedit).`,okText:'Ya, Tambahkan',danger:false});
+    if(!ok)return;
+    const yr=String(new Date().getFullYear());
+    DEF_ROOM.forEach((nama,i)=>{room.devices.push({id:uid(),nama,merek:'',sn:`TPL-${room.id}-${i+1}`,tahun:yr,tglService:'',kondisi:'Baik',keterangan:'Template — edit SN asli.',roomId:room.id,roomName:room.name,createdAt:nowISO(),updatedAt:nowISO()})});
+    save('rooms');addLog('Room '+room.name,'tambah',`Menambahkan ${DEF_ROOM.length} template perangkat`);toast(`Template ditambahkan ke ${room.name}`,'ok');rerender();
+  });
+  $$('[data-act="edit"]').forEach(b=>b.onclick=()=>{
+    const dev=room.devices.find(d=>d.id===b.dataset.id);if(!dev)return;
+    openDeviceForm({device:dev,devices:room.devices,categoryKey:'room',categoryName:room.name,roomId:room.id,roomName:room.name,onSave:data=>{const idx=room.devices.findIndex(x=>x.id===dev.id);room.devices[idx]={...room.devices[idx],...data};save('rooms');addLog('Room '+room.name,'edit',`Edit "${data.nama}"`);toast('Perubahan disimpan.','ok');rerender()}});
+  });
+  $$('[data-act="del"]').forEach(b=>b.onclick=async()=>{
+    const dev=room.devices.find(d=>d.id===b.dataset.id);if(!dev)return;
+    const ok=await confirmBox({title:'Hapus Perangkat?',message:`Hapus "${dev.nama}" (SN: ${dev.sn}) dari ${room.name}?`,okText:'Ya, Hapus'});
+    if(!ok)return;
+    room.devices=room.devices.filter(x=>x.id!==dev.id);
+    save('rooms');addLog('Room '+room.name,'hapus',`Hapus "${dev.nama}" (SN ${dev.sn})`);toast('Perangkat dihapus.','ok');rerender();
+  });
+  $$('[data-act="move"]').forEach(b=>b.onclick=()=>openMoveForm(room,b.dataset.id,rerender));
+}
+function openMoveForm(fromRoom,deviceId,rerender){
+  const dev=fromRoom.devices.find(d=>d.id===deviceId);if(!dev)return;
+  const others=state.rooms.filter(r=>r.id!==fromRoom.id);
+  const root=$('#modalRoot');
+  root.innerHTML=`<div class="modal" style="max-width:440px"><div class="m-head"><h2>Pindah Room — ${esc(dev.nama)}</h2><button class="m-x" data-act="close">✕</button></div><div class="m-body"><div class="field"><label>Pilih Room Tujuan</label><select class="select" id="moveTarget" style="width:100%">${others.map(r=>`<option value="${r.id}">${esc(r.name)}</option>`).join('')}</select><div class="hint">Perangkat akan dihapus dari ${esc(fromRoom.name)} dan muncul di room tujuan.</div></div></div><div class="m-foot"><button class="btn btn-o" data-act="close">Batal</button><button class="btn btn-p" data-act="ok">↔️ Pindahkan</button></div></div>`;
+  root.classList.add('on');
+  const close=()=>{root.classList.remove('on');root.innerHTML=''};
+  root.querySelectorAll('[data-act="close"]').forEach(b=>b.onclick=close);
+  root.querySelector('[data-act="ok"]').onclick=()=>{
+    const targetId=root.querySelector('#moveTarget').value;
+    const target=state.rooms.find(r=>r.id===targetId);if(!target)return;
+    fromRoom.devices=fromRoom.devices.filter(d=>d.id!==deviceId);
+    dev.roomId=target.id;dev.roomName=target.name;dev.movedFrom=fromRoom.id;dev.movedFromName=fromRoom.name;dev.updatedAt=nowISO();
+    target.devices.push(dev);
+    save('rooms');addLog('Room '+fromRoom.name,'moving',`"${dev.nama}" (SN ${dev.sn}) → ${target.name}`);toast(`Dipindahkan ke ${target.name}`,'ok');close();rerender();
+  };
+}
+
+const STANDALONE_META={network:{title:'Jaringan',sub:'Switch Hub, Mikrotik, Router, Router ISP',ico:'🌐'},bendahara:{title:'Bendahara',sub:'Komputer, Printer, Fingerprint',ico:'📊'},server:{title:'Server',sub:'Monitor, Storage, Komputer Server',ico:'🖥️'},printer:{title:'Printer & Fingerprint',sub:'Printer nota & fingerprint absensi',ico:'🖨️'}};
+function renderStandalone(key){
+  const meta=STANDALONE_META[key];const devs=state[key];const empty=devs.length===0;
+  return `
+  <div class="page-head no-print"><div><h1>${meta.ico} ${meta.title}</h1><p>${meta.sub} · ${devs.length} perangkat</p></div><div class="actions"><button class="btn btn-o" data-act="print">🖨️ Cetak PDF A4</button><button class="btn btn-p" data-act="add">+ Tambah Perangkat</button></div></div>
+  ${empty?`<div class="card no-print" style="margin-bottom:14px"><div class="empty" style="padding:44px 20px"><div class="ico">${meta.ico}</div><h3>Belum ada perangkat ${meta.title}</h3><p>Tambahkan perangkat untuk kategori ini.</p><button class="btn btn-p" data-act="add">+ Tambah Perangkat</button></div></div>`:''}
+  ${renderDeviceTable(devs,{key,categoryName:meta.title})}`;
+}
+function bindStandalone(key){
+  bindTableFilters(key,state[key]);
+  const rerender=()=>{renderSidebar();renderContent()};
+  const meta=STANDALONE_META[key];
+  $$('[data-act="print"]').forEach(b=>b.onclick=()=>window.print());
+  $$('[data-act="add"]').forEach(b=>b.onclick=()=>openDeviceForm({device:null,devices:state[key],categoryKey:key,categoryName:meta.title,roomId:key,roomName:meta.title,onSave:data=>{state[key].push(data);save(key);addLog(meta.title,'tambah',`Tambah "${data.nama}"`);toast('Perangkat ditambahkan.','ok');rerender()}}));
+  $$('[data-act="edit"]').forEach(b=>b.onclick=()=>{
+    const dev=state[key].find(d=>d.id===b.dataset.id);if(!dev)return;
+    openDeviceForm({device:dev,devices:state[key],categoryKey:key,categoryName:meta.title,roomId:key,roomName:meta.title,onSave:data=>{const idx=state[key].findIndex(x=>x.id===dev.id);state[key][idx]={...state[key][idx],...data};save(key);addLog(meta.title,'edit',`Edit "${data.nama}"`);toast('Perubahan disimpan.','ok');rerender()}});
+  });
+  $$('[data-act="del"]').forEach(b=>b.onclick=async()=>{
+    const dev=state[key].find(d=>d.id===b.dataset.id);if(!dev)return;
+    const ok=await confirmBox({title:'Hapus Perangkat?',message:`Hapus "${dev.nama}" dari ${meta.title}?`,okText:'Ya, Hapus'});
+    if(!ok)return;
+    state[key]=state[key].filter(x=>x.id!==dev.id);
+    save(key);addLog(meta.title,'hapus',`Hapus "${dev.nama}"`);toast('Perangkat dihapus.','ok');rerender();
+  });
+}
+
+function renderCCTV(){
+  const dvrs=state.cctv.dvrs;const cams=state.cctv.cameras;
+  const dvrList=dvrs.length?dvrs.map(d=>`<li><div class="main"><div class="nm">${esc(d.nama)}${d.merek?` (${esc(d.merek)})`:''}</div><div class="sb">SN: ${esc(d.sn||'-')} · Storage: ${esc(d.storage||'-')} ${d.storageSn?`(SN: ${esc(d.storageSn)})`:''}</div></div><div class="right">${kondisiBadge(d.kondisi)}<div style="margin-top:4px"><button class="ico-btn" data-dvr-edit="${d.id}" title="Edit">✏️</button><button class="ico-btn danger" data-dvr-del="${d.id}" title="Hapus">🗑️</button></div></div></li>`).join(''):'<li><span class="td-sub">Belum ada DVR.</span></li>';
+  const chUsed=cams.filter(c=>c.channel).length;
+  return `
+  <div class="page-head no-print"><div><h1>📹 CCTV</h1><p>32 channel · ${dvrs.length} DVR · ${cams.length} kamera terdaftar</p></div><div class="actions"><button class="btn btn-o" data-act="print">🖨️ Cetak PDF A4</button><button class="btn btn-p" data-act="add-dvr">+ Tambah DVR</button><button class="btn btn-p" data-act="add-cam">+ Tambah Kamera</button></div></div>
+  <div class="dash-grid no-print">
+    <div class="panel"><div class="panel-head"><h3>DVR & Storage</h3><span class="bdg bdg-cat" style="margin-left:auto">${dvrs.length} DVR</span></div><div class="panel-body"><ul class="list-clean">${dvrList}</ul></div></div>
+    <div class="panel"><div class="panel-head"><h3>Info Channel</h3></div><div class="panel-body"><p style="font-size:13px;color:var(--m);line-height:1.8">Total channel tersedia: <strong>32</strong><br>Kamera terdaftar: <strong>${cams.length}</strong><br>Channel terpakai: <strong>${chUsed}</strong><br>Channel kosong: <strong>${Math.max(0,32-cams.length)}</strong></p></div></div>
+  </div>
+  <div class="no-print" style="margin-top:8px">${renderDeviceTable(cams,{key:'cctv',categoryName:'CCTV — Kamera'})}</div>
+  <div class="print-only">
+    ${printHeader('CCTV — DVR & Kamera')}
+    <h3 style="font-size:12px;margin-bottom:6px">DVR & Storage</h3>
+    <table><thead><tr><th>No</th><th>Nama</th><th>Merek</th><th>SN</th><th>Storage</th><th>Kapasitas</th><th>Kondisi</th></tr></thead><tbody>${dvrs.length?dvrs.map((d,i)=>`<tr><td>${i+1}</td><td>${esc(d.nama)}</td><td>${esc(d.merek||'-')}</td><td>${esc(d.sn||'-')}</td><td>${esc(d.storage||'-')}</td><td>${esc(d.storageKapasitas||'-')}</td><td>${esc(d.kondisi)}</td></tr>`).join(''):'<tr><td colspan="7" style="text-align:center">Belum ada DVR</td></tr>'}</tbody></table>
+    <h3 style="font-size:12px;margin:14px 0 6px">Kamera per Channel</h3>
+    <table><thead><tr><th>No</th><th>Channel</th><th>Lokasi/Nama</th><th>Merek</th><th>SN</th><th>Tahun</th><th>Kondisi</th></tr></thead><tbody>${cams.length?cams.map((d,i)=>`<tr><td>${i+1}</td><td>${esc(d.channel||'-')}</td><td>${esc(d.nama)}</td><td>${esc(d.merek||'-')}</td><td>${esc(d.sn||'-')}</td><td>${esc(d.tahun||'-')}</td><td>${esc(d.kondisi)}</td></tr>`).join(''):'<tr><td colspan="7" style="text-align:center">Belum ada kamera</td></tr>'}</tbody></table>
+    ${printFooter()}
+  </div>`;
+}
+function bindCCTV(){
+  bindTableFilters('cctv',state.cctv.cameras);
+  const rerender=()=>{renderSidebar();renderContent()};
+  $$('[data-act="print"]').forEach(b=>b.onclick=()=>window.print());
+  $$('[data-act="add-dvr"]').forEach(b=>b.onclick=()=>openDVRForm(null,rerender));
+  $$('[data-dvr-edit]').forEach(b=>b.onclick=()=>{const dvr=state.cctv.dvrs.find(d=>d.id===b.dataset.dvrEdit);if(dvr)openDVRForm(dvr,rerender)});
+  $$('[data-dvr-del]').forEach(b=>b.onclick=async()=>{
+    const dvr=state.cctv.dvrs.find(d=>d.id===b.dataset.dvrDel);if(!dvr)return;
+    const ok=await confirmBox({title:'Hapus DVR?',message:`Hapus "${dvr.nama}"?`,okText:'Ya, Hapus'});if(!ok)return;
+    state.cctv.dvrs=state.cctv.dvrs.filter(x=>x.id!==dvr.id);
+    save('cctv');addLog('CCTV','hapus',`Hapus DVR "${dvr.nama}"`);toast('DVR dihapus.','ok');rerender();
+  });
+  $$('[data-act="add-cam"]').forEach(b=>b.onclick=()=>openDeviceForm({device:null,devices:state.cctv.cameras,categoryKey:'cctv',categoryName:'CCTV Kamera',roomId:'cctv',roomName:'CCTV',onSave:data=>{if(!data.channel){const u=new Set(state.cctv.cameras.map(c=>Number(c.channel)).filter(n=>!isNaN(n)));let ch=1;while(u.has(ch)&&ch<=32)ch++;data.channel=ch<=32?ch:''}state.cctv.cameras.push(data);save('cctv');addLog('CCTV','tambah',`Tambah kamera "${data.nama}" (CH ${data.channel||'-'})`);toast('Kamera ditambahkan.','ok');rerender()}}));
+  $$('[data-act="edit"]').forEach(b=>b.onclick=()=>{
+    const dev=state.cctv.cameras.find(d=>d.id===b.dataset.id);if(!dev)return;
+    openDeviceForm({device:dev,devices:state.cctv.cameras,categoryKey:'cctv',categoryName:'CCTV Kamera',roomId:'cctv',roomName:'CCTV',onSave:data=>{const idx=state.cctv.cameras.findIndex(x=>x.id===dev.id);state.cctv.cameras[idx]={...state.cctv.cameras[idx],...data,channel:data.channel||state.cctv.cameras[idx].channel};save('cctv');addLog('CCTV','edit',`Edit kamera "${data.nama}"`);toast('Kamera diperbarui.','ok');rerender()}});
+  });
+  $$('[data-act="del"]').forEach(b=>b.onclick=async()=>{
+    const dev=state.cctv.cameras.find(d=>d.id===b.dataset.id);if(!dev)return;
+    const ok=await confirmBox({title:'Hapus Kamera?',message:`Hapus kamera "${dev.nama}"?`,okText:'Ya, Hapus'});if(!ok)return;
+    state.cctv.cameras=state.cctv.cameras.filter(x=>x.id!==dev.id);
+    save('cctv');addLog('CCTV','hapus',`Hapus kamera "${dev.nama}"`);toast('Kamera dihapus.','ok');rerender();
+  });
+}
+function openDVRForm(dvr,rerender){
+  const editing=!!dvr;const d=dvr||{};
+  const root=$('#modalRoot');
+  root.innerHTML=`
+    <div class="modal">
+      <div class="m-head"><h2>${editing?'Edit':'Tambah'} DVR</h2><button class="m-x" data-act="close">✕</button></div>
+      <div class="m-body"><form id="dvrForm" class="form-grid">
+        <div class="field full"><label>Nama DVR <span class="req">*</span></label><input class="input" name="nama" value="${esc(d.nama||'')}" placeholder="cth: DVR 1"></div>
+        <div class="field"><label>Merek/Model</label><input class="input" name="merek" value="${esc(d.merek||'')}"></div>
+        <div class="field"><label>SN DVR <span class="req">*</span></label><input class="input" name="sn" value="${esc(d.sn||'')}"></div>
+        <div class="field"><label>Storage Disk</label><input class="input" name="storage" value="${esc(d.storage||'')}" placeholder="cth: HDD Seagate 2TB"></div>
+        <div class="field"><label>SN Storage</label><input class="input" name="storageSn" value="${esc(d.storageSn||'')}"></div>
+        <div class="field"><label>Kapasitas Storage</label><input class="input" name="storageKapasitas" value="${esc(d.storageKapasitas||'')}" placeholder="cth: 2TB"></div>
+        <div class="field"><label>Tahun Masuk</label><input class="input" name="tahun" value="${esc(d.tahun||'')}" maxlength="4" placeholder="cth: 2022"></div>
+        <div class="field"><label>Kondisi</label><select class="select" name="kondisi">${KON.map(k=>`<option value="${k}" ${d.kondisi===k?'selected':''}>${k}</option>`).join('')}</select></div>
+        <div class="field full"><label>Keterangan</label><textarea class="input" name="keterangan">${esc(d.keterangan||'')}</textarea></div>
+      </form></div>
+      <div class="m-foot"><button class="btn btn-o" data-act="close">Batal</button><button class="btn btn-p" data-act="save">💾 Simpan</button></div>
+    </div>`;
+  root.classList.add('on');
+  const close=()=>{root.classList.remove('on');root.innerHTML=''};
+  root.querySelectorAll('[data-act="close"]').forEach(b=>b.onclick=close);
+  root.querySelector('[data-act="save"]').onclick=()=>{
+    const fd=new FormData(root.querySelector('#dvrForm'));
+    const data={nama:(fd.get('nama')||'').trim(),merek:(fd.get('merek')||'').trim(),sn:(fd.get('sn')||'').trim(),storage:(fd.get('storage')||'').trim(),storageSn:(fd.get('storageSn')||'').trim(),storageKapasitas:(fd.get('storageKapasitas')||'').trim(),tahun:(fd.get('tahun')||'').trim(),kondisi:fd.get('kondisi')||'Baik',keterangan:(fd.get('keterangan')||'').trim()};
+    if(!data.nama){toast('Nama DVR wajib.','err');return}
+    if(!data.sn){toast('SN DVR wajib.','err');return}
+    if(data.tahun&&!/^\d{4}$/.test(data.tahun)){toast('Tahun harus 4 digit.','err');return}
+    const dup=state.cctv.dvrs.find(x=>x.id!==(editing?dvr.id:null)&&(x.sn||'').trim().toLowerCase()===data.sn.toLowerCase());
+    if(dup){toast('SN sudah dipakai DVR lain.','err');return}
+    if(editing){const idx=state.cctv.dvrs.findIndex(x=>x.id===dvr.id);state.cctv.dvrs[idx]={...state.cctv.dvrs[idx],...data};addLog('CCTV','edit',`Edit DVR "${data.nama}"`)}
+    else{data.id=uid();state.cctv.dvrs.push(data);addLog('CCTV','tambah',`Tambah DVR "${data.nama}"`)}
+    save('cctv');toast('DVR disimpan.','ok');close();rerender();
+  };
+}
+
+function renderKasir(sub){
+  const list=state.kasir[sub];const title=sub==='karaoke'?'Kasir Karaoke':'Kasir Carwash';
+  return `
+  <div class="page-head no-print"><div><h1>💰 ${title}</h1><p>${list.length} perangkat</p></div><div class="actions"><button class="btn btn-o" data-act="print">🖨️ Cetak PDF A4</button><button class="btn btn-p" data-act="add">+ Tambah Perangkat</button></div></div>
+  <div class="tabs no-print"><button class="tab ${sub==='carwash'?'on':''}" data-kasir-tab="carwash">🚗 Kasir Carwash</button><button class="tab ${sub==='karaoke'?'on':''}" data-kasir-tab="karaoke">🎤 Kasir Karaoke</button></div>
+  ${list.length===0?`<div class="card no-print" style="margin-bottom:14px"><div class="empty" style="padding:44px 20px"><div class="ico">💰</div><h3>Belum ada perangkat ${title}</h3><p>Tambahkan komputer set, printer nota, dan lainnya.</p><button class="btn btn-p" data-act="add">+ Tambah Perangkat</button></div></div>`:''}
+  ${renderDeviceTable(list,{key:'kasir-'+sub,categoryName:title})}`;
+}
+function bindKasir(sub){
+  bindTableFilters('kasir-'+sub,state.kasir[sub]);
+  const rerender=()=>{renderSidebar();renderContent()};
+  const title=sub==='karaoke'?'Kasir Karaoke':'Kasir Carwash';
+  $$('[data-kasir-tab]').forEach(b=>b.onclick=()=>{state.view={type:'kasir',sub:b.dataset.kasirTab};updateTopbar();renderSidebar();renderContent()});
+  $$('[data-act="print"]').forEach(b=>b.onclick=()=>window.print());
+  $$('[data-act="add"]').forEach(b=>b.onclick=()=>openDeviceForm({device:null,devices:state.kasir[sub],categoryKey:'kasir',categoryName:title,roomId:'kasir-'+sub,roomName:title,onSave:data=>{state.kasir[sub].push(data);save('kasir');addLog(title,'tambah',`Tambah "${data.nama}"`);toast('Perangkat ditambahkan.','ok');rerender()}}));
+  $$('[data-act="edit"]').forEach(b=>b.onclick=()=>{
+    const dev=state.kasir[sub].find(d=>d.id===b.dataset.id);if(!dev)return;
+    openDeviceForm({device:dev,devices:state.kasir[sub],categoryKey:'kasir',categoryName:title,roomId:'kasir-'+sub,roomName:title,onSave:data=>{const idx=state.kasir[sub].findIndex(x=>x.id===dev.id);state.kasir[sub][idx]={...state.kasir[sub][idx],...data};save('kasir');addLog(title,'edit',`Edit "${data.nama}"`);toast('Perubahan disimpan.','ok');rerender()}});
+  });
+  $$('[data-act="del"]').forEach(b=>b.onclick=async()=>{
+    const dev=state.kasir[sub].find(d=>d.id===b.dataset.id);if(!dev)return;
+    const ok=await confirmBox({title:'Hapus Perangkat?',message:`Hapus "${dev.nama}"?`,okText:'Ya, Hapus'});if(!ok)return;
+    state.kasir[sub]=state.kasir[sub].filter(x=>x.id!==dev.id);
+    save('kasir');addLog(title,'hapus',`Hapus "${dev.nama}"`);toast('Perangkat dihapus.','ok');rerender();
+  });
+}
+
+function renderSettings(){
+  const s=state.settings;
+  return `
+  <div class="page-head"><div><h1>⚙️ Pengaturan</h1><p>Konfigurasi aplikasi & cetak PDF</p></div></div>
+  <div class="card" style="max-width:720px;margin-bottom:16px"><div class="panel-body">
+    <form id="settingsForm" class="form-grid">
+      <div class="field full"><label>Nama Aplikasi</label><input class="input" name="appName" value="${esc(s.appName)}"></div>
+      <div class="field full"><label>Subjudul Aplikasi</label><input class="input" name="appSubtitle" value="${esc(s.appSubtitle)}"></div>
+      <div class="field full"><label>Judul Inventaris (header PDF)</label><input class="input" name="inventoryTitle" value="${esc(s.inventoryTitle)}"></div>
+      <div class="field full"><label>Nama Perusahaan / Header Cetak</label><input class="input" name="companyName" value="${esc(s.companyName)}"></div>
+      <div class="field full"><label>Logo (upload gambar)</label><input class="input" type="file" accept="image/*" id="logoInput"><div class="hint">Auto-resize 256px, disimpan base64.</div>${s.logo?`<div style="margin-top:8px"><img src="${s.logo}" style="max-height:60px;border-radius:8px;border:1px solid var(--b)"></div>`:''}</div>
+      <div class="field"><label>Nama Penanggung Jawab</label><input class="input" name="picName" value="${esc(s.picName)}"></div>
+      <div class="field"><label>NIP</label><input class="input" name="picNip" value="${esc(s.picNip)}"></div>
+      <div class="field full"><label>Warna Tema</label><input class="input" type="color" name="theme" value="${esc(s.theme)}" style="height:42px;padding:4px"></div>
+    </form>
+    <div style="margin-top:16px;display:flex;gap:10px;flex-wrap:wrap"><button class="btn btn-p" id="saveSettings">💾 Simpan Pengaturan</button><button class="btn btn-d" id="resetSettings">↺ Reset Pengaturan</button></div>
+  </div></div>
+  <div class="card" style="max-width:720px;margin-bottom:16px"><div class="panel-head"><h3>💾 Backup & Restore</h3></div><div class="panel-body">
+    <p style="font-size:13px;color:var(--m);margin-bottom:14px">Export seluruh data ke JSON, atau import dari file backup.</p>
+    <div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn btn-o" id="btnExport">⬇️ Export JSON</button><button class="btn btn-o" id="btnImport">⬆️ Import JSON</button><input type="file" id="importFile" accept="application/json" style="display:none"></div>
+  </div></div>
+  <div class="card" style="max-width:720px"><div class="panel-head"><h3>⚠️ Reset Total</h3></div><div class="panel-body">
+    <p style="font-size:13px;color:var(--m);margin-bottom:14px">Hapus SEMUA data, pengaturan, dan log. Export JSON dulu!</p>
+    <button class="btn btn-d" id="btnResetAll">Reset Semua Data</button>
+  </div></div>`;
+}
+function bindSettings(){
+  $('#saveSettings').onclick=()=>{
+    const fd=new FormData($('#settingsForm'));const s=state.settings;
+    ['appName','appSubtitle','inventoryTitle','companyName','picName','picNip','theme'].forEach(f=>{s[f]=(fd.get(f)||'').toString().trim()});
+    save('settings');applySettingsUI();addLog('Pengaturan','settings','Pengaturan disimpan');toast('Pengaturan disimpan.','ok');renderSidebar();
+  };
+  $('#logoInput').onchange=e=>{
+    const f=e.target.files[0];if(!f)return;
+    if(!f.type.startsWith('image/')){toast('File harus gambar.','err');return}
+    const r=new FileReader();
+    r.onload=()=>{
+      const img=new Image();
+      img.onload=()=>{
+        const max=256;const sc=Math.min(1,max/Math.max(img.width,img.height,1));
+        const cv=document.createElement('canvas');cv.width=Math.round(img.width*sc);cv.height=Math.round(img.height*sc);
+        cv.getContext('2d').drawImage(img,0,0,cv.width,cv.height);
+        state.settings.logo=cv.toDataURL('image/png');save('settings');applySettingsUI();addLog('Pengaturan','settings','Mengganti logo');toast('Logo diperbarui.','ok');renderContent();
+      };
+      img.onerror=()=>toast('Gambar tidak valid.','err');img.src=r.result;
+    };
+    r.readAsDataURL(f);
+  };
+  $('#resetSettings').onclick=async()=>{
+    const ok=await confirmBox({title:'Reset Pengaturan?',message:'Pengaturan kembali ke default. Data perangkat TIDAK terhapus.',okText:'Ya, Reset',double:true});if(!ok)return;
+    state.settings={...DEFAULT_SETTINGS};save('settings');applySettingsUI();addLog('Pengaturan','settings','Reset pengaturan');toast('Pengaturan direset.','ok');renderSidebar();renderContent();updateTopbar();
+  };
+  $('#btnExport').onclick=()=>{
+    const data={_meta:{app:'Inventaris BSC',version:2,exportedAt:nowISO()},settings:state.settings,rooms:state.rooms,network:state.network,cctv:state.cctv,kasir:state.kasir,bendahara:state.bendahara,server:state.server,printer:state.printer,logs:state.logs};
+    const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+    const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`inventaris-bsc-backup-${today()}.json`;a.click();
+    setTimeout(()=>URL.revokeObjectURL(a.href),1500);
+    addLog('Backup','export','Export seluruh data');toast('Backup diunduh.','ok');
+  };
+  $('#btnImport').onclick=()=>$('#importFile').click();
+  $('#importFile').onchange=e=>{
+    const f=e.target.files[0];if(!f)return;
+    const r=new FileReader();
+    r.onload=()=>{try{const data=JSON.parse(r.result);doImport(data,f.name)}catch{toast('File JSON tidak valid.','err')}e.target.value=''};
+    r.readAsText(f);
+  };
+  $('#btnResetAll').onclick=async()=>{
+    const ok=await confirmBox({title:'Reset Total?',message:'SEMUA data perangkat, pengaturan, dan log akan dihapus permanen.',okText:'Ya, Reset Semua',double:true});if(!ok)return;
+    Object.keys(K).forEach(k=>localStorage.removeItem(K[k]));location.reload();
+  };
+}
+async function doImport(data,filename){
+  if(!data||typeof data!=='object'||!data.rooms){toast('Struktur backup tidak valid.','err');return}
+  const ok=await confirmBox({title:'Import Data?',message:`Data lama akan DITIMPA dengan file "${filename}". Lanjutkan?`,okText:'Ya, Import',double:true});if(!ok)return;
+  try{
+    let rooms=state.rooms;
+    if(Array.isArray(data.rooms))rooms=data.rooms.map((rm,i)=>({id:rm.id||'room-'+(i+1),name:rm.name||('Room '+(i+1)),devices:Array.isArray(rm.devices)?rm.devices:[]}));
+    for(let i=1;i<=20;i++)if(!rooms.find(r=>r.id==='room-'+i))rooms.push({id:'room-'+i,name:'Room '+i,devices:[]});
+    state.rooms=rooms;
+    if(data.settings)state.settings={...DEFAULT_SETTINGS,...data.settings};
+    if(Array.isArray(data.network))state.network=data.network;
+    if(data.cctv&&typeof data.cctv==='object')state.cctv={dvrs:Array.isArray(data.cctv.dvrs)?data.cctv.dvrs:[],cameras:Array.isArray(data.cctv.cameras)?data.cctv.cameras:[]};
+    if(data.kasir&&typeof data.kasir==='object')state.kasir={carwash:Array.isArray(data.kasir.carwash)?data.kasir.carwash:[],karaoke:Array.isArray(data.kasir.karaoke)?data.kasir.karaoke:[]};
+    if(Array.isArray(data.bendahara))state.bendahara=data.bendahara;
+    if(Array.isArray(data.server))state.server=data.server;
+    if(Array.isArray(data.printer))state.printer=data.printer;
+    if(Array.isArray(data.logs))state.logs=data.logs;
+    ['settings','rooms','network','cctv','kasir','bendahara','server','printer','logs'].forEach(k=>save(k));
+    addLog('Backup','import',`Import dari ${filename}`);toast('Data berhasil diimport.','ok');applySettingsUI();renderSidebar();renderContent();updateTopbar();
+  }catch(err){console.error(err);toast('Gagal import data.','err')}
+}
+
+function renderLogs(){
+  const f=state.filters.logs||{};
+  return `
+  <div class="page-head"><div><h1>📜 Log Aktivitas</h1><p>Riwayat perubahan data (bukan view/print)</p></div><div class="actions"><button class="btn btn-o" id="logCsv">⬇️ Export CSV</button><button class="btn btn-d" id="logClear">🗑️ Bersihkan Log</button></div></div>
+  <div class="toolbar">
+    <div class="grow"><input class="input-search" id="logSearch" placeholder="Cari teks..." value="${esc(f.search||'')}"></div>
+    <select class="select" id="logCat"><option value="">Semua Kategori</option>${[...new Set(state.logs.map(l=>l.category))].map(c=>`<option ${f.cat===c?'selected':''}>${esc(c)}</option>`).join('')}</select>
+    <select class="select" id="logAction"><option value="">Semua Aksi</option>${ACTIONS.map(a=>`<option value="${a}" ${f.action===a?'selected':''}>${a}</option>`).join('')}</select>
+    <input class="input" type="date" id="logFrom" value="${f.from||''}" style="width:auto">
+    <input class="input" type="date" id="logTo" value="${f.to||''}" style="width:auto">
+  </div>
+  <div id="logTable">${renderLogTable()}</div>`;
+}
+function logFiltered(){
+  const f=state.filters.logs||{};
+  return state.logs.filter(l=>{
+    if(f.search){const hay=`${l.category} ${l.action} ${l.detail}`.toLowerCase();if(!hay.includes(f.search.toLowerCase()))return false}
+    if(f.cat&&l.category!==f.cat)return false;
+    if(f.action&&l.action!==f.action)return false;
+    if(f.from&&l.ts.slice(0,10)<f.from)return false;
+    if(f.to&&l.ts.slice(0,10)>f.to)return false;
+    return true;
+  });
+}
+function renderLogTable(){
+  const list=logFiltered();
+  if(!list.length)return `<div class="card empty" style="padding:44px 20px"><div class="ico">📜</div><h3>Tidak ada log</h3><p>Belum ada perubahan data yang tercatat.</p></div>`;
+  return `<div class="tbl-wrap"><table><thead><tr><th>Waktu</th><th>Kategori</th><th>Aksi</th><th>Detail</th></tr></thead><tbody>${list.map(l=>`<tr><td style="white-space:nowrap">${fmtDateTime(l.ts)}</td><td><span class="bdg bdg-cat">${esc(l.category)}</span></td><td><span class="bdg ${l.action==='hapus'?'bdg-tidak':l.action==='tambah'?'bdg-baik':l.action==='edit'?'bdg-normal':'bdg-perhatian'}">${esc(l.action)}</span></td><td>${esc(l.detail)}</td></tr>`).join('')}</tbody></table></div><p style="margin-top:10px;font-size:12px;color:var(--m)">Menampilkan ${list.length} dari ${state.logs.length} log.</p>`;
+}
+function bindLogs(){
+  const setF=patch=>{state.filters.logs={...(state.filters.logs||{}),...patch};const t=$('#logTable');if(t)t.innerHTML=renderLogTable()};
+  const s=$('#logSearch');
+  if(s)s.oninput=e=>{setF({search:e.target.value});const ni=$('#logSearch');if(ni){ni.focus();const v=ni.value;ni.value='';ni.value=v}};
+  const c=$('#logCat');if(c)c.onchange=e=>setF({cat:e.target.value});
+  const a=$('#logAction');if(a)a.onchange=e=>setF({action:e.target.value});
+  const fr=$('#logFrom');if(fr)fr.onchange=e=>setF({from:e.target.value});
+  const to=$('#logTo');if(to)to.onchange=e=>setF({to:e.target.value});
+  $('#logCsv').onclick=()=>{
+    const list=logFiltered();
+    const q=s=>{s=String(s);if(/^[=+\-@]/.test(s))s="'"+s;return '"'+s.replace(/"/g,'""')+'"'};
+    const rows=[['Waktu','Kategori','Aksi','Detail'],...list.map(l=>[l.ts,l.category,l.action,l.detail])];
+    const csv=rows.map(r=>r.map(q).join(',')).join('\r\n');
+    const blob=new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8'});
+    const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`log-bsc-${today()}.csv`;a.click();
+    setTimeout(()=>URL.revokeObjectURL(a.href),1500);
+    addLog('Log','export','Export CSV');toast('CSV diunduh.','ok');
+  };
+  $('#logClear').onclick=async()=>{
+    const ok=await confirmBox({title:'Bersihkan Semua Log?',message:'Seluruh riwayat log akan dihapus permanen.',okText:'Ya, Hapus Semua',double:true});if(!ok)return;
+    state.logs=[];save('logs');toast('Log dibersihkan.','ok');renderContent();
+  };
+}
+
+function printHeader(catName){
+  const s=state.settings;
+  const logo=s.logo?`<img src="${s.logo}">`:(s.appName||'BSC').slice(0,3).toUpperCase();
+  return `<div class="print-header"><div class="plogo">${logo}</div><div class="pinfo"><div class="pco">${esc(s.companyName||'BlondoSport Center')}</div><div class="ptitle">${esc(s.inventoryTitle||s.appName||'Inventaris Perangkat')}</div><div class="pcat">Kategori: ${esc(catName||'-')}</div></div></div><div class="print-meta"><span>Dicetak: ${fmtDateTime(nowISO())}</span><span>Oleh: ${esc(s.picName||'-')}</span></div>`;
+}
+function printFooter(){
+  const s=state.settings;
+  return `<div class="print-footer-left"><span>${esc(s.companyName||'BlondoSport Center')} — ${esc(s.appName||'Inventaris BSC')}</span><span>${new Date().toLocaleDateString('id-ID')}</span></div><div class="print-footer"><div class="print-sign"><div>Penanggung Jawab,</div><div class="space"></div><div class="nm">${esc(s.picName||'..............................')}</div><div>NIP: ${esc(s.picNip||'-')}</div></div></div>`;
+}
+
+function openGlobalSearch(){
+  const all=allDevices();const root=$('#modalRoot');
+  root.innerHTML=`<div class="modal wide"><div class="m-head"><h2>🔍 Pencarian Global</h2><button class="m-x" data-act="close">✕</button></div><div class="m-body"><input class="input-search" id="gsInput" placeholder="Cari nama, SN, kategori..." autofocus><div id="gsRes" style="margin-top:14px"></div></div></div>`;
+  root.classList.add('on');
+  const close=()=>{root.classList.remove('on');root.innerHTML=''};
+  root.querySelector('[data-act="close"]').onclick=close;
+  const input=root.querySelector('#gsInput');const res=root.querySelector('#gsRes');
+  const run=()=>{
+    const term=(input.value||'').toLowerCase().trim();
+    if(!term){res.innerHTML=`<p style="color:var(--m);font-size:13px">Ketik untuk mencari ${all.length} perangkat...</p>`;return}
+    const hits=all.filter(d=>`${d.nama||''} ${d.sn||''} ${d.merek||''} ${d._catLabel||''}`.toLowerCase().includes(term)).slice(0,25);
+    if(!hits.length){res.innerHTML=`<p style="color:var(--m);font-size:13px">Tidak ada hasil.</p>`;return}
+    res.innerHTML=`<ul class="list-clean">${hits.map(d=>`<li><div class="main"><div class="nm">${esc(d.nama)}</div><div class="sb">${esc(d._catLabel)} · SN: ${esc(d.sn||'-')}</div></div><div class="right">${kondisiBadge(d.kondisi)}</div></li>`).join('')}</ul>`;
+  };
+  input.oninput=run;run();setTimeout(()=>input.focus(),50);
+}
+
+function closeSidebarMobile(){$('#sidebar').classList.remove('on');$('#overlay').classList.remove('on')}
+
+function init(){
+  loadAll();
+  applySettingsUI();
+  renderSidebar();
+  renderContent();
+  updateTopbar();
+  $('#burger').onclick=()=>{const sb=$('#sidebar');if(sb.classList.contains('on'))closeSidebarMobile();else{sb.classList.add('on');$('#overlay').classList.add('on')}};
+  $('#overlay').onclick=closeSidebarMobile;
+  $('#gsBtn').onclick=openGlobalSearch;
+  document.addEventListener('keydown',e=>{
+    if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='k'){e.preventDefault();openGlobalSearch()}
+    if(e.key==='Escape'){const m=$('#modalRoot');if(m){m.classList.remove('on');m.innerHTML=''}}
+  });
+  const sk=$('#skeleton');if(sk)setTimeout(()=>{sk.classList.add('hide');setTimeout(()=>sk.remove(),350)},300);
+}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);
+else init();
+</script>
+</body>
+</html>
